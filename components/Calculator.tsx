@@ -36,13 +36,13 @@ const Calculator: React.FC = () => {
 
   return (
     <section className="pb-12 pt-2 bg-bgLight">
-      <div className="container mx-auto px-6">
+      <div className="container mx-auto px-6 max-w-5xl">
         <div className="text-center mb-12">
           <h2 className="font-display font-bold text-3xl text-primary">Kalkulator Przyszłości</h2>
           <p className="text-gray-600 mt-2">Sprawdź, ile możesz uzbierać do 18. urodzin dziecka.</p>
         </div>
 
-        <div className="max-w-4xl mx-auto bg-white rounded-[32px] shadow-xl overflow-hidden flex flex-col md:flex-row border border-gray-100">
+        <div className="bg-white rounded-[32px] shadow-xl overflow-hidden flex flex-col md:flex-row border border-gray-100">
           <div className="p-8 md:p-10 md:w-1/2 md:border-r border-gray-100 bg-white">
             <div className="mb-10">
               <label htmlFor="age-slider" className="block text-sm font-bold text-gray-700 mb-2">
