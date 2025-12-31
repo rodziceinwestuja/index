@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useLayoutEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 export type LegalType = 'privacy' | 'terms' | 'contact' | null;
@@ -9,37 +9,94 @@ interface LegalModalProps {
   onClose: () => void;
 }
 
+/**
+ * Ten sam scroll-lock co w ProvidersModal (bez "trzęsienia" + licznik).
+ */
+const LOCK_COUNT_ATTR = 'data-scroll-lock-count';
+const PREV_OVERFLOW_ATTR = 'data-prev-overflow';
+const PREV_PADDING_RIGHT_ATTR = 'data-prev-padding-right';
+
+function lockBodyScroll() {
+  const body = document.body;
+  const html = document.documentElement;
+
+  const currentCount = parseInt(body.getAttribute(LOCK_COUNT_ATTR) || '0', 10);
+
+  if (currentCount === 0) {
+    body.setAttribute(PREV_OVERFLOW_ATTR, body.style.overflow || '');
+    body.setAttribute(PREV_PADDING_RIGHT_ATTR, body.style.paddingRight || '');
+
+    const scrollbarWidth = window.innerWidth - html.clientWidth;
+
+    body.style.overflow = 'hidden';
+
+    if (scrollbarWidth > 0) {
+      const computed = getComputedStyle(body).paddingRight;
+      const currentPadding = parseFloat(computed || '0') || 0;
+      body.style.paddingRight = `${currentPadding + scrollbarWidth}px`;
+    }
+  }
+
+  body.setAttribute(LOCK_COUNT_ATTR, String(currentCount + 1));
+}
+
+function unlockBodyScroll() {
+  const body = document.body;
+  const currentCount = parseInt(body.getAttribute(LOCK_COUNT_ATTR) || '0', 10);
+
+  if (currentCount <= 1) {
+    const prevOverflow = body.getAttribute(PREV_OVERFLOW_ATTR) ?? '';
+    const prevPaddingRight = body.getAttribute(PREV_PADDING_RIGHT_ATTR) ?? '';
+
+    body.style.overflow = prevOverflow;
+    body.style.paddingRight = prevPaddingRight;
+
+    body.removeAttribute(LOCK_COUNT_ATTR);
+    body.removeAttribute(PREV_OVERFLOW_ATTR);
+    body.removeAttribute(PREV_PADDING_RIGHT_ATTR);
+  } else {
+    body.setAttribute(LOCK_COUNT_ATTR, String(currentCount - 1));
+  }
+}
+
 const LegalModal: React.FC<LegalModalProps> = ({ isOpen, type, onClose }) => {
   const [isRendered, setIsRendered] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [activeType, setActiveType] = useState<LegalType>(type);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (isOpen && type) {
       setActiveType(type);
       setIsRendered(true);
       setIsClosing(false);
-      
-      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-      document.body.style.paddingRight = `${scrollbarWidth}px`;
-      document.body.style.overflow = 'hidden';
-      
-    } else if (!isOpen && isRendered) {
+
+      lockBodyScroll();
+      return;
+    }
+
+    if (!isOpen && isRendered) {
       setIsClosing(true);
-      const timer = setTimeout(() => {
+      const timer = window.setTimeout(() => {
         setIsRendered(false);
         setIsClosing(false);
-        document.body.style.overflow = '';
-        document.body.style.paddingRight = '';
-      }, 350); 
-      return () => clearTimeout(timer);
+        unlockBodyScroll();
+      }, 350);
+
+      return () => window.clearTimeout(timer);
     }
   }, [isOpen, type, isRendered]);
 
+  useLayoutEffect(() => {
+    return () => {
+      if (isRendered) unlockBodyScroll();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleResetCookies = () => {
     if (confirm("Czy na pewno chcesz zresetować ustawienia plików cookies? Strona zostanie odświeżona.")) {
-        localStorage.removeItem('cookie_consent_level');
-        window.location.reload();
+      localStorage.removeItem('cookie_consent_level');
+      window.location.reload();
     }
   };
 
@@ -50,9 +107,8 @@ const LegalModal: React.FC<LegalModalProps> = ({ isOpen, type, onClose }) => {
   let title = "";
   let icon = "";
   let content = null;
-  let headerColorClass = ""; // bg-gray-50 default
+  let headerColorClass = "";
 
-  // Content Definitions
   switch (activeType) {
     case 'terms':
       title = "Regulamin Serwisu";
@@ -60,25 +116,25 @@ const LegalModal: React.FC<LegalModalProps> = ({ isOpen, type, onClose }) => {
       headerColorClass = "bg-blue-50 text-blue-600";
       content = (
         <div className="space-y-6 text-sm text-gray-600 leading-relaxed">
-            <section>
-                <h4 className="font-bold text-primary text-base mb-2">1. Postanowienia ogólne</h4>
-                <p>Niniejszy regulamin określa zasady korzystania z serwisu edukacyjnego Rodzice Inwestują. Właścicielem serwisu jest podmiot prywatny, a kontakt możliwy jest pod adresem: {email}.</p>
-            </section>
-            <section>
-                <h4 className="font-bold text-primary text-base mb-2">2. Cel serwisu i Wyłączenie odpowiedzialności</h4>
-                <p>Treści prezentowane w serwisie mają charakter wyłącznie <strong>edukacyjny i informacyjny</strong>. Nie stanowią one rekomendacji inwestycyjnych w rozumieniu Rozporządzenia Ministra Finansów z dnia 19 października 2005 r. w sprawie informacji stanowiących rekomendacje dotyczące instrumentów finansowych.</p>
-                <p className="mt-2 bg-red-50 p-3 rounded-xl border border-red-100 text-red-800 font-medium">
-                    Autorzy serwisu nie ponoszą odpowiedzialności za decyzje inwestycyjne podjęte na podstawie prezentowanych treści. Pamiętaj, że każda inwestycja wiąże się z ryzykiem utraty części lub całości kapitału.
-                </p>
-            </section>
-            <section>
-                <h4 className="font-bold text-primary text-base mb-2">3. Prawa autorskie</h4>
-                <p>Wszelkie treści, kalkulatory, grafiki i układ serwisu są chronione prawem autorskim. Kopiowanie i rozpowszechnianie bez zgody autora jest zabronione.</p>
-            </section>
-            <section>
-                <h4 className="font-bold text-primary text-base mb-2">4. Linki zewnętrzne</h4>
-                <p>Serwis zawiera linki do stron podmiotów trzecich (np. banków, biur maklerskich). Nie mamy wpływu na treści tam zawarte ani na zmiany w ofertach tych instytucji.</p>
-            </section>
+          <section>
+            <h4 className="font-bold text-primary text-base mb-2">1. Postanowienia ogólne</h4>
+            <p>Niniejszy regulamin określa zasady korzystania z serwisu edukacyjnego Rodzice Inwestują. Właścicielem serwisu jest podmiot prywatny, a kontakt możliwy jest pod adresem: {email}.</p>
+          </section>
+          <section>
+            <h4 className="font-bold text-primary text-base mb-2">2. Cel serwisu i Wyłączenie odpowiedzialności</h4>
+            <p>Treści prezentowane w serwisie mają charakter wyłącznie <strong>edukacyjny i informacyjny</strong>. Nie stanowią one rekomendacji inwestycyjnych w rozumieniu Rozporządzenia Ministra Finansów z dnia 19 października 2005 r. w sprawie informacji stanowiących rekomendacje dotyczące instrumentów finansowych.</p>
+            <p className="mt-2 bg-red-50 p-3 rounded-xl border border-red-100 text-red-800 font-medium">
+              Autorzy serwisu nie ponoszą odpowiedzialności za decyzje inwestycyjne podjęte na podstawie prezentowanych treści. Pamiętaj, że każda inwestycja wiąże się z ryzykiem utraty części lub całości kapitału.
+            </p>
+          </section>
+          <section>
+            <h4 className="font-bold text-primary text-base mb-2">3. Prawa autorskie</h4>
+            <p>Wszelkie treści, kalkulatory, grafiki i układ serwisu są chronione prawem autorskim. Kopiowanie i rozpowszechnianie bez zgody autora jest zabronione.</p>
+          </section>
+          <section>
+            <h4 className="font-bold text-primary text-base mb-2">4. Linki zewnętrzne</h4>
+            <p>Serwis zawiera linki do stron podmiotów trzecich (np. banków, biur maklerskich). Nie mamy wpływu na treści tam zawarte ani na zmiany w ofertach tych instytucji.</p>
+          </section>
         </div>
       );
       break;
@@ -89,70 +145,71 @@ const LegalModal: React.FC<LegalModalProps> = ({ isOpen, type, onClose }) => {
       headerColorClass = "bg-emerald-50 text-emerald-600";
       content = (
         <div className="space-y-8 text-sm text-gray-600 leading-relaxed">
-            <section>
-                <h4 className="font-bold text-primary text-base mb-2">1. Administrator Danych</h4>
-                <p>Szanujemy Twoją prywatność. Serwis nie wymaga zakładania konta ani podawania danych osobowych do korzystania z treści edukacyjnych i kalkulatorów.</p>
-            </section>
-            <section>
-                <h4 className="font-bold text-primary text-base mb-2">2. Pliki Cookies (Ciasteczka)</h4>
-                <p className="mb-4">Serwis wykorzystuje pliki cookies. Są to niewielkie pliki tekstowe wysyłane przez serwer www i przechowywane przez oprogramowanie komputera przeglądarki. Kiedy przeglądarka ponownie połączy się ze stroną, witryna rozpoznaje rodzaj urządzenia, z którego łączy się użytkownik.</p>
-                
-                <div className="border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-                    <div className="bg-gray-100 p-3 font-bold text-xs uppercase tracking-wider text-gray-500 grid grid-cols-12 gap-2">
-                        <div className="col-span-4 md:col-span-3">Rodzaj</div>
-                        <div className="col-span-8 md:col-span-9">Opis i Cel</div>
-                    </div>
-                    
-                    <div className="p-4 border-t border-gray-100 grid grid-cols-12 gap-2 items-center">
-                        <div className="col-span-4 md:col-span-3">
-                             <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs font-bold">Niezbędne</span>
-                        </div>
-                        <div className="col-span-8 md:col-span-9 text-xs">
-                            Kluczowe dla działania strony. Przechowują informację o tym, czy zaakceptowałeś(aś) politykę prywatności (aby nie wyświetlać paska cookies przy każdym odświeżeniu). Tych plików nie można wyłączyć.
-                        </div>
-                    </div>
-                    
-                    <div className="p-4 border-t border-gray-100 grid grid-cols-12 gap-2 items-center bg-gray-50/50">
-                        <div className="col-span-4 md:col-span-3">
-                             <span className="bg-blue-100 text-blue-600 px-2 py-1 rounded text-xs font-bold">Analityczne</span>
-                        </div>
-                        <div className="col-span-8 md:col-span-9 text-xs">
-                             Np. <strong>Google Analytics</strong>. Pomagają nam zrozumieć, jak użytkownicy korzystają ze strony (które artykuły są czytane, ile czasu spędzają w kalkulatorze). Dane są anonimizowane (nie znamy Twojego imienia ani dokładnego adresu).
-                        </div>
-                    </div>
+          <section>
+            <h4 className="font-bold text-primary text-base mb-2">1. Administrator Danych</h4>
+            <p>Szanujemy Twoją prywatność. Serwis nie wymaga zakładania konta ani podawania danych osobowych do korzystania z treści edukacyjnych i kalkulatorów.</p>
+          </section>
 
-                    <div className="p-4 border-t border-gray-100 grid grid-cols-12 gap-2 items-center">
-                        <div className="col-span-4 md:col-span-3">
-                             <span className="bg-purple-100 text-purple-600 px-2 py-1 rounded text-xs font-bold">Funkcjonalne</span>
-                        </div>
-                        <div className="col-span-8 md:col-span-9 text-xs">
-                             Mogą służyć do zapamiętania wprowadzonych danych w kalkulatorze (tylko w pamięci Twojej przeglądarki), aby nie zniknęły po przypadkowym odświeżeniu.
-                        </div>
-                    </div>
+          <section>
+            <h4 className="font-bold text-primary text-base mb-2">2. Pliki Cookies (Ciasteczka)</h4>
+            <p className="mb-4">Serwis wykorzystuje pliki cookies. Są to niewielkie pliki tekstowe wysyłane przez serwer www i przechowywane przez oprogramowanie komputera przeglądarki. Kiedy przeglądarka ponownie połączy się ze stroną, witryna rozpoznaje rodzaj urządzenia, z którego łączy się użytkownik.</p>
+
+            <div className="border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+              <div className="bg-gray-100 p-3 font-bold text-xs uppercase tracking-wider text-gray-500 grid grid-cols-12 gap-2">
+                <div className="col-span-4 md:col-span-3">Rodzaj</div>
+                <div className="col-span-8 md:col-span-9">Opis i Cel</div>
+              </div>
+
+              <div className="p-4 border-t border-gray-100 grid grid-cols-12 gap-2 items-center">
+                <div className="col-span-4 md:col-span-3">
+                  <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs font-bold">Niezbędne</span>
                 </div>
-            </section>
-            
-            <section>
-                <h4 className="font-bold text-primary text-base mb-2">3. Logi serwera</h4>
-                <p>Korzystanie ze strony wiąże się z przesyłaniem zapytań do serwera, na którym przechowywana jest strona. Każde zapytanie skierowane do serwera zapisywane jest w logach serwera (adres IP, data, czas, informacje o przeglądarce). Dane te nie są kojarzone z konkretnymi osobami korzystającymi ze strony.</p>
-            </section>
+                <div className="col-span-8 md:col-span-9 text-xs">
+                  Kluczowe dla działania strony. Przechowują informację o tym, czy zaakceptowałeś(aś) politykę prywatności (aby nie wyświetlać paska cookies przy każdym odświeżeniu). Tych plików nie można wyłączyć.
+                </div>
+              </div>
 
-            <section>
-                <h4 className="font-bold text-primary text-base mb-2">4. Twoje Prawa i Zmiana Zgody</h4>
-                <p className="mb-4">W każdym momencie możesz zmienić ustawienia swojej przeglądarki lub wycofać zgodę udzieloną na naszej stronie.</p>
-                
-                <button 
-                    onClick={handleResetCookies}
-                    className="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded-lg transition-colors border border-gray-200 text-xs"
-                >
-                    <i className="fas fa-cookie-bite"></i> Zresetuj ustawienia cookies dla tej strony
-                </button>
-            </section>
+              <div className="p-4 border-t border-gray-100 grid grid-cols-12 gap-2 items-center bg-gray-50/50">
+                <div className="col-span-4 md:col-span-3">
+                  <span className="bg-blue-100 text-blue-600 px-2 py-1 rounded text-xs font-bold">Analityczne</span>
+                </div>
+                <div className="col-span-8 md:col-span-9 text-xs">
+                  Np. <strong>Google Analytics</strong>. Pomagają nam zrozumieć, jak użytkownicy korzystają ze strony (które artykuły są czytane, ile czasu spędzają w kalkulatorze). Dane są anonimizowane (nie znamy Twojego imienia ani dokładnego adresu).
+                </div>
+              </div>
 
-            <section>
-                <h4 className="font-bold text-primary text-base mb-2">5. Kontakt</h4>
-                <p>W przypadku pytań dotyczących przetwarzania danych, prosimy o kontakt pod adresem: {email}.</p>
-            </section>
+              <div className="p-4 border-t border-gray-100 grid grid-cols-12 gap-2 items-center">
+                <div className="col-span-4 md:col-span-3">
+                  <span className="bg-purple-100 text-purple-600 px-2 py-1 rounded text-xs font-bold">Funkcjonalne</span>
+                </div>
+                <div className="col-span-8 md:col-span-9 text-xs">
+                  Mogą służyć do zapamiętania wprowadzonych danych w kalkulatorze (tylko w pamięci Twojej przeglądarki), aby nie zniknęły po przypadkowym odświeżeniu.
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section>
+            <h4 className="font-bold text-primary text-base mb-2">3. Logi serwera</h4>
+            <p>Korzystanie ze strony wiąże się z przesyłaniem zapytań do serwera, na którym przechowywana jest strona. Każde zapytanie skierowane do serwera zapisywane jest w logach serwera (adres IP, data, czas, informacje o przeglądarce). Dane te nie są kojarzone z konkretnymi osobami korzystającymi ze strony.</p>
+          </section>
+
+          <section>
+            <h4 className="font-bold text-primary text-base mb-2">4. Twoje Prawa i Zmiana Zgody</h4>
+            <p className="mb-4">W każdym momencie możesz zmienić ustawienia swojej przeglądarki lub wycofać zgodę udzieloną na naszej stronie.</p>
+
+            <button
+              onClick={handleResetCookies}
+              className="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded-lg transition-colors border border-gray-200 text-xs"
+            >
+              <i className="fas fa-cookie-bite"></i> Zresetuj ustawienia cookies dla tej strony
+            </button>
+          </section>
+
+          <section>
+            <h4 className="font-bold text-primary text-base mb-2">5. Kontakt</h4>
+            <p>W przypadku pytań dotyczących przetwarzania danych, prosimy o kontakt pod adresem: {email}.</p>
+          </section>
         </div>
       );
       break;
@@ -163,51 +220,51 @@ const LegalModal: React.FC<LegalModalProps> = ({ isOpen, type, onClose }) => {
       headerColorClass = "bg-accent/10 text-accent";
       content = (
         <div className="text-center py-4">
-           <p className="text-gray-500 mb-8 max-w-sm mx-auto">Masz pytania dotyczące treści, zauważyłeś błąd w kalkulatorze lub chcesz nawiązać współpracę? Napisz do nas!</p>
-           
-           <div className="bg-white border border-gray-100 shadow-xl rounded-3xl p-6 mb-8 max-w-sm mx-auto relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-1 bg-accent"></div>
-                <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i className="fas fa-at text-2xl"></i>
-                </div>
-                <h4 className="font-bold text-gray-800 text-lg mb-1">Wyślij wiadomość</h4>
-                <p className="text-sm text-gray-400 mb-4">Odpowiadamy zazwyczaj w ciągu 24h</p>
-                <div className="bg-gray-50 py-3 px-4 rounded-xl border border-gray-200 text-primary font-bold select-all mb-6 break-all">
-                    {email}
-                </div>
-                <a 
-                    href={`mailto:${email}`}
-                    className="block w-full bg-primary text-white font-bold py-3 rounded-xl hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
-                >
-                    Napisz teraz <i className="fas fa-paper-plane ml-2"></i>
-                </a>
-           </div>
-           
-           <p className="text-xs text-gray-400 italic">
-               Prosimy nie przesyłać poufnych danych finansowych.
-           </p>
+          <p className="text-gray-500 mb-8 max-w-sm mx-auto">Masz pytania dotyczące treści, zauważyłeś błąd w kalkulatorze lub chcesz nawiązać współpracę? Napisz do nas!</p>
+
+          <div className="bg-white border border-gray-100 shadow-xl rounded-3xl p-6 mb-8 max-w-sm mx-auto relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-accent"></div>
+            <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <i className="fas fa-at text-2xl"></i>
+            </div>
+            <h4 className="font-bold text-gray-800 text-lg mb-1">Wyślij wiadomość</h4>
+            <p className="text-sm text-gray-400 mb-4">Odpowiadamy zazwyczaj w ciągu 24h</p>
+            <div className="bg-gray-50 py-3 px-4 rounded-xl border border-gray-200 text-primary font-bold select-all mb-6 break-all">
+              {email}
+            </div>
+            <a
+              href={`mailto:${email}`}
+              className="block w-full bg-primary text-white font-bold py-3 rounded-xl hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
+            >
+              Napisz teraz <i className="fas fa-paper-plane ml-2"></i>
+            </a>
+          </div>
+
+          <p className="text-xs text-gray-400 italic">
+            Prosimy nie przesyłać poufnych danych finansowych.
+          </p>
         </div>
       );
       break;
   }
 
   const backdropAnimation = isClosing ? 'animate-fade-out' : 'animate-fade-in';
-  const modalAnimation = isClosing 
-    ? 'animate-slide-down md:animate-fade-out' 
+  const modalAnimation = isClosing
+    ? 'animate-slide-down md:animate-fade-out'
     : 'animate-slide-up md:animate-fade-in';
 
   return createPortal(
-    <div 
+    <div
       className="fixed inset-0 z-[9999] flex justify-center items-end md:items-center pointer-events-none"
       role="dialog"
       aria-modal="true"
     >
-      <div 
-        className={`fixed inset-0 bg-black/60 backdrop-blur-sm pointer-events-auto ${backdropAnimation}`} 
+      <div
+        className={`fixed inset-0 bg-black/60 backdrop-blur-sm pointer-events-auto ${backdropAnimation}`}
         onClick={onClose}
       ></div>
 
-      <div 
+      <div
         className={`
           bg-white w-full relative z-10 pointer-events-auto
           rounded-t-[32px] md:rounded-[32px]
@@ -218,35 +275,32 @@ const LegalModal: React.FC<LegalModalProps> = ({ isOpen, type, onClose }) => {
           ${modalAnimation}
         `}
       >
-        {/* Header */}
         <div className={`p-6 border-b border-gray-100 flex justify-between items-center shrink-0 rounded-t-[32px] bg-white`}>
           <div className="flex items-center gap-4">
-             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 transition-colors ${headerColorClass}`}>
-                <i className={`fas ${icon} text-xl`}></i>
-             </div>
-             <div>
-                <h3 className="text-xl font-bold text-primary leading-tight">{title}</h3>
-             </div>
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 transition-colors ${headerColorClass}`}>
+              <i className={`fas ${icon} text-xl`}></i>
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-primary leading-tight">{title}</h3>
+            </div>
           </div>
-          <button 
-            onClick={onClose} 
+          <button
+            onClick={onClose}
             className="w-10 h-10 rounded-full bg-white border border-gray-200 text-gray-400 hover:text-primary hover:border-primary flex items-center justify-center transition-all shrink-0"
           >
             <i className="fas fa-times"></i>
           </button>
         </div>
 
-        {/* Content Body */}
         <div className="p-6 md:p-8 bg-white overflow-y-auto flex-1 overscroll-contain">
-            {content}
-            <div className="h-8 md:h-0"></div>
+          {content}
+          <div className="h-8 md:h-0"></div>
         </div>
 
-        {/* Footer (for close button mobile feel) */}
         <div className="p-4 border-t border-gray-100 bg-gray-50 text-center shrink-0 md:rounded-b-[32px]">
-            <button onClick={onClose} className="text-gray-500 hover:text-primary text-sm font-semibold transition py-2 px-4">
-                Zamknij okno
-            </button>
+          <button onClick={onClose} className="text-gray-500 hover:text-primary text-sm font-semibold transition py-2 px-4">
+            Zamknij okno
+          </button>
         </div>
       </div>
     </div>,
