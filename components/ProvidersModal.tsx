@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useState } from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import BrokerList from './wizard/BrokerList';
 import { BROKERS, METAL_DEALERS, BOND_PLATFORMS } from '../constants';
@@ -11,58 +11,43 @@ interface ProvidersModalProps {
   onClose: () => void;
 }
 
-/**
- * Scroll lock bez "trzęsienia" (useLayoutEffect) + z kompensacją szerokości scrollbara.
- * Dodatkowo: licznik blokady (działa poprawnie, nawet jeśli w przyszłości otworzysz 2 modale).
- */
-const LOCK_COUNT_ATTR = 'data-scroll-lock-count';
-const PREV_OVERFLOW_ATTR = 'data-prev-overflow';
-const PREV_PADDING_RIGHT_ATTR = 'data-prev-padding-right';
+// GLOBALNY, prosty scroll lock bez liczników i bez “utknięcia”
+let scrollLockedCount = 0;
+let prevOverflow = '';
+let prevPaddingRight = '';
 
-function lockBodyScroll() {
+function lockBodyScrollOnce() {
   const body = document.body;
   const html = document.documentElement;
 
-  const currentCount = parseInt(body.getAttribute(LOCK_COUNT_ATTR) || '0', 10);
+  scrollLockedCount += 1;
+  if (scrollLockedCount > 1) return; // już zablokowane przez inny modal
 
-  // Jeśli to pierwsza blokada — zapamiętaj poprzednie inline style
-  if (currentCount === 0) {
-    body.setAttribute(PREV_OVERFLOW_ATTR, body.style.overflow || '');
-    body.setAttribute(PREV_PADDING_RIGHT_ATTR, body.style.paddingRight || '');
+  prevOverflow = body.style.overflow;
+  prevPaddingRight = body.style.paddingRight;
 
-    const scrollbarWidth = window.innerWidth - html.clientWidth;
+  const scrollbarWidth = window.innerWidth - html.clientWidth;
 
-    body.style.overflow = 'hidden';
+  body.style.overflow = 'hidden';
 
-    // dodaj kompensację do aktualnego padding-right (computed), żeby layout nie "skakał"
-    if (scrollbarWidth > 0) {
-      const computed = getComputedStyle(body).paddingRight;
-      const currentPadding = parseFloat(computed || '0') || 0;
-      body.style.paddingRight = `${currentPadding + scrollbarWidth}px`;
-    }
+  if (scrollbarWidth > 0) {
+    const computed = getComputedStyle(body).paddingRight;
+    const currentPadding = parseFloat(computed || '0') || 0;
+    body.style.paddingRight = `${currentPadding + scrollbarWidth}px`;
   }
-
-  body.setAttribute(LOCK_COUNT_ATTR, String(currentCount + 1));
 }
 
-function unlockBodyScroll() {
+function unlockBodyScrollOnce() {
   const body = document.body;
-  const currentCount = parseInt(body.getAttribute(LOCK_COUNT_ATTR) || '0', 10);
 
-  if (currentCount <= 1) {
-    // Ostatni unlock — przywróć poprzednie style
-    const prevOverflow = body.getAttribute(PREV_OVERFLOW_ATTR) ?? '';
-    const prevPaddingRight = body.getAttribute(PREV_PADDING_RIGHT_ATTR) ?? '';
+  scrollLockedCount = Math.max(0, scrollLockedCount - 1);
+  if (scrollLockedCount > 0) return; // inny modal nadal otwarty
 
-    body.style.overflow = prevOverflow;
-    body.style.paddingRight = prevPaddingRight;
+  body.style.overflow = prevOverflow;
+  body.style.paddingRight = prevPaddingRight;
 
-    body.removeAttribute(LOCK_COUNT_ATTR);
-    body.removeAttribute(PREV_OVERFLOW_ATTR);
-    body.removeAttribute(PREV_PADDING_RIGHT_ATTR);
-  } else {
-    body.setAttribute(LOCK_COUNT_ATTR, String(currentCount - 1));
-  }
+  prevOverflow = '';
+  prevPaddingRight = '';
 }
 
 const ProvidersModal: React.FC<ProvidersModalProps> = ({ isOpen, type, onClose }) => {
@@ -70,35 +55,49 @@ const ProvidersModal: React.FC<ProvidersModalProps> = ({ isOpen, type, onClose }
   const [isClosing, setIsClosing] = useState(false);
   const [activeType, setActiveType] = useState<ProviderType>(type);
 
+  // pilnujemy, żeby lock zrobić tylko raz na “cykl otwarcia”
+  const hasLockedRef = useRef(false);
+
   useLayoutEffect(() => {
+    // OPEN
     if (isOpen && type) {
       setActiveType(type);
       setIsRendered(true);
       setIsClosing(false);
 
-      lockBodyScroll();
+      if (!hasLockedRef.current) {
+        lockBodyScrollOnce();
+        hasLockedRef.current = true;
+      }
       return;
     }
 
+    // CLOSE (z animacją)
     if (!isOpen && isRendered) {
       setIsClosing(true);
+
       const timer = window.setTimeout(() => {
         setIsRendered(false);
         setIsClosing(false);
-        unlockBodyScroll();
+
+        if (hasLockedRef.current) {
+          unlockBodyScrollOnce();
+          hasLockedRef.current = false;
+        }
       }, 350);
 
       return () => window.clearTimeout(timer);
     }
   }, [isOpen, type, isRendered]);
 
-  // awaryjne sprzątanie (np. hot reload / unmount)
+  // awaryjne sprzątanie przy unmount (zawsze oddaj scroll, jeśli ten modal go zablokował)
   useLayoutEffect(() => {
     return () => {
-      // jeśli modal był otwarty i komponent znika, upewnij się, że odblokujesz
-      if (isRendered) unlockBodyScroll();
+      if (hasLockedRef.current) {
+        unlockBodyScrollOnce();
+        hasLockedRef.current = false;
+      }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (!isRendered || !activeType) return null;
@@ -149,7 +148,7 @@ const ProvidersModal: React.FC<ProvidersModalProps> = ({ isOpen, type, onClose }
       <div
         className={`fixed inset-0 bg-black/60 backdrop-blur-sm pointer-events-auto ${backdropAnimation}`}
         onClick={onClose}
-      ></div>
+      />
 
       <div
         className={`
