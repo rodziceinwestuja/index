@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useState } from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 export type LegalType = 'privacy' | 'terms' | 'contact' | null;
@@ -9,54 +9,43 @@ interface LegalModalProps {
   onClose: () => void;
 }
 
-/**
- * Ten sam scroll-lock co w ProvidersModal (bez "trzęsienia" + licznik).
- */
-const LOCK_COUNT_ATTR = 'data-scroll-lock-count';
-const PREV_OVERFLOW_ATTR = 'data-prev-overflow';
-const PREV_PADDING_RIGHT_ATTR = 'data-prev-padding-right';
+// Ten sam GLOBALNY scroll lock (wspólny dla obu modali)
+let scrollLockedCount = 0;
+let prevOverflow = '';
+let prevPaddingRight = '';
 
-function lockBodyScroll() {
+function lockBodyScrollOnce() {
   const body = document.body;
   const html = document.documentElement;
 
-  const currentCount = parseInt(body.getAttribute(LOCK_COUNT_ATTR) || '0', 10);
+  scrollLockedCount += 1;
+  if (scrollLockedCount > 1) return;
 
-  if (currentCount === 0) {
-    body.setAttribute(PREV_OVERFLOW_ATTR, body.style.overflow || '');
-    body.setAttribute(PREV_PADDING_RIGHT_ATTR, body.style.paddingRight || '');
+  prevOverflow = body.style.overflow;
+  prevPaddingRight = body.style.paddingRight;
 
-    const scrollbarWidth = window.innerWidth - html.clientWidth;
+  const scrollbarWidth = window.innerWidth - html.clientWidth;
 
-    body.style.overflow = 'hidden';
+  body.style.overflow = 'hidden';
 
-    if (scrollbarWidth > 0) {
-      const computed = getComputedStyle(body).paddingRight;
-      const currentPadding = parseFloat(computed || '0') || 0;
-      body.style.paddingRight = `${currentPadding + scrollbarWidth}px`;
-    }
+  if (scrollbarWidth > 0) {
+    const computed = getComputedStyle(body).paddingRight;
+    const currentPadding = parseFloat(computed || '0') || 0;
+    body.style.paddingRight = `${currentPadding + scrollbarWidth}px`;
   }
-
-  body.setAttribute(LOCK_COUNT_ATTR, String(currentCount + 1));
 }
 
-function unlockBodyScroll() {
+function unlockBodyScrollOnce() {
   const body = document.body;
-  const currentCount = parseInt(body.getAttribute(LOCK_COUNT_ATTR) || '0', 10);
 
-  if (currentCount <= 1) {
-    const prevOverflow = body.getAttribute(PREV_OVERFLOW_ATTR) ?? '';
-    const prevPaddingRight = body.getAttribute(PREV_PADDING_RIGHT_ATTR) ?? '';
+  scrollLockedCount = Math.max(0, scrollLockedCount - 1);
+  if (scrollLockedCount > 0) return;
 
-    body.style.overflow = prevOverflow;
-    body.style.paddingRight = prevPaddingRight;
+  body.style.overflow = prevOverflow;
+  body.style.paddingRight = prevPaddingRight;
 
-    body.removeAttribute(LOCK_COUNT_ATTR);
-    body.removeAttribute(PREV_OVERFLOW_ATTR);
-    body.removeAttribute(PREV_PADDING_RIGHT_ATTR);
-  } else {
-    body.setAttribute(LOCK_COUNT_ATTR, String(currentCount - 1));
-  }
+  prevOverflow = '';
+  prevPaddingRight = '';
 }
 
 const LegalModal: React.FC<LegalModalProps> = ({ isOpen, type, onClose }) => {
@@ -64,22 +53,32 @@ const LegalModal: React.FC<LegalModalProps> = ({ isOpen, type, onClose }) => {
   const [isClosing, setIsClosing] = useState(false);
   const [activeType, setActiveType] = useState<LegalType>(type);
 
+  const hasLockedRef = useRef(false);
+
   useLayoutEffect(() => {
     if (isOpen && type) {
       setActiveType(type);
       setIsRendered(true);
       setIsClosing(false);
 
-      lockBodyScroll();
+      if (!hasLockedRef.current) {
+        lockBodyScrollOnce();
+        hasLockedRef.current = true;
+      }
       return;
     }
 
     if (!isOpen && isRendered) {
       setIsClosing(true);
+
       const timer = window.setTimeout(() => {
         setIsRendered(false);
         setIsClosing(false);
-        unlockBodyScroll();
+
+        if (hasLockedRef.current) {
+          unlockBodyScrollOnce();
+          hasLockedRef.current = false;
+        }
       }, 350);
 
       return () => window.clearTimeout(timer);
@@ -88,9 +87,11 @@ const LegalModal: React.FC<LegalModalProps> = ({ isOpen, type, onClose }) => {
 
   useLayoutEffect(() => {
     return () => {
-      if (isRendered) unlockBodyScroll();
+      if (hasLockedRef.current) {
+        unlockBodyScrollOnce();
+        hasLockedRef.current = false;
+      }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleResetCookies = () => {
@@ -106,7 +107,7 @@ const LegalModal: React.FC<LegalModalProps> = ({ isOpen, type, onClose }) => {
 
   let title = "";
   let icon = "";
-  let content = null;
+  let content: React.ReactNode = null;
   let headerColorClass = "";
 
   switch (activeType) {
@@ -122,9 +123,9 @@ const LegalModal: React.FC<LegalModalProps> = ({ isOpen, type, onClose }) => {
           </section>
           <section>
             <h4 className="font-bold text-primary text-base mb-2">2. Cel serwisu i Wyłączenie odpowiedzialności</h4>
-            <p>Treści prezentowane w serwisie mają charakter wyłącznie <strong>edukacyjny i informacyjny</strong>. Nie stanowią one rekomendacji inwestycyjnych w rozumieniu Rozporządzenia Ministra Finansów z dnia 19 października 2005 r. w sprawie informacji stanowiących rekomendacje dotyczące instrumentów finansowych.</p>
+            <p>Treści prezentowane w serwisie mają charakter wyłącznie <strong>edukacyjny i informacyjny</strong>. Nie stanowią one rekomendacji inwestycyjnych.</p>
             <p className="mt-2 bg-red-50 p-3 rounded-xl border border-red-100 text-red-800 font-medium">
-              Autorzy serwisu nie ponoszą odpowiedzialności za decyzje inwestycyjne podjęte na podstawie prezentowanych treści. Pamiętaj, że każda inwestycja wiąże się z ryzykiem utraty części lub całości kapitału.
+              Autorzy serwisu nie ponoszą odpowiedzialności za decyzje inwestycyjne podjęte na podstawie prezentowanych treści.
             </p>
           </section>
           <section>
@@ -133,7 +134,7 @@ const LegalModal: React.FC<LegalModalProps> = ({ isOpen, type, onClose }) => {
           </section>
           <section>
             <h4 className="font-bold text-primary text-base mb-2">4. Linki zewnętrzne</h4>
-            <p>Serwis zawiera linki do stron podmiotów trzecich (np. banków, biur maklerskich). Nie mamy wpływu na treści tam zawarte ani na zmiany w ofertach tych instytucji.</p>
+            <p>Serwis zawiera linki do stron podmiotów trzecich. Nie mamy wpływu na treści tam zawarte ani na zmiany w ofertach tych instytucji.</p>
           </section>
         </div>
       );
@@ -152,51 +153,7 @@ const LegalModal: React.FC<LegalModalProps> = ({ isOpen, type, onClose }) => {
 
           <section>
             <h4 className="font-bold text-primary text-base mb-2">2. Pliki Cookies (Ciasteczka)</h4>
-            <p className="mb-4">Serwis wykorzystuje pliki cookies. Są to niewielkie pliki tekstowe wysyłane przez serwer www i przechowywane przez oprogramowanie komputera przeglądarki. Kiedy przeglądarka ponownie połączy się ze stroną, witryna rozpoznaje rodzaj urządzenia, z którego łączy się użytkownik.</p>
-
-            <div className="border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-              <div className="bg-gray-100 p-3 font-bold text-xs uppercase tracking-wider text-gray-500 grid grid-cols-12 gap-2">
-                <div className="col-span-4 md:col-span-3">Rodzaj</div>
-                <div className="col-span-8 md:col-span-9">Opis i Cel</div>
-              </div>
-
-              <div className="p-4 border-t border-gray-100 grid grid-cols-12 gap-2 items-center">
-                <div className="col-span-4 md:col-span-3">
-                  <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs font-bold">Niezbędne</span>
-                </div>
-                <div className="col-span-8 md:col-span-9 text-xs">
-                  Kluczowe dla działania strony. Przechowują informację o tym, czy zaakceptowałeś(aś) politykę prywatności (aby nie wyświetlać paska cookies przy każdym odświeżeniu). Tych plików nie można wyłączyć.
-                </div>
-              </div>
-
-              <div className="p-4 border-t border-gray-100 grid grid-cols-12 gap-2 items-center bg-gray-50/50">
-                <div className="col-span-4 md:col-span-3">
-                  <span className="bg-blue-100 text-blue-600 px-2 py-1 rounded text-xs font-bold">Analityczne</span>
-                </div>
-                <div className="col-span-8 md:col-span-9 text-xs">
-                  Np. <strong>Google Analytics</strong>. Pomagają nam zrozumieć, jak użytkownicy korzystają ze strony (które artykuły są czytane, ile czasu spędzają w kalkulatorze). Dane są anonimizowane (nie znamy Twojego imienia ani dokładnego adresu).
-                </div>
-              </div>
-
-              <div className="p-4 border-t border-gray-100 grid grid-cols-12 gap-2 items-center">
-                <div className="col-span-4 md:col-span-3">
-                  <span className="bg-purple-100 text-purple-600 px-2 py-1 rounded text-xs font-bold">Funkcjonalne</span>
-                </div>
-                <div className="col-span-8 md:col-span-9 text-xs">
-                  Mogą służyć do zapamiętania wprowadzonych danych w kalkulatorze (tylko w pamięci Twojej przeglądarki), aby nie zniknęły po przypadkowym odświeżeniu.
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <section>
-            <h4 className="font-bold text-primary text-base mb-2">3. Logi serwera</h4>
-            <p>Korzystanie ze strony wiąże się z przesyłaniem zapytań do serwera, na którym przechowywana jest strona. Każde zapytanie skierowane do serwera zapisywane jest w logach serwera (adres IP, data, czas, informacje o przeglądarce). Dane te nie są kojarzone z konkretnymi osobami korzystającymi ze strony.</p>
-          </section>
-
-          <section>
-            <h4 className="font-bold text-primary text-base mb-2">4. Twoje Prawa i Zmiana Zgody</h4>
-            <p className="mb-4">W każdym momencie możesz zmienić ustawienia swojej przeglądarki lub wycofać zgodę udzieloną na naszej stronie.</p>
+            <p className="mb-4">Serwis wykorzystuje pliki cookies.</p>
 
             <button
               onClick={handleResetCookies}
@@ -207,8 +164,8 @@ const LegalModal: React.FC<LegalModalProps> = ({ isOpen, type, onClose }) => {
           </section>
 
           <section>
-            <h4 className="font-bold text-primary text-base mb-2">5. Kontakt</h4>
-            <p>W przypadku pytań dotyczących przetwarzania danych, prosimy o kontakt pod adresem: {email}.</p>
+            <h4 className="font-bold text-primary text-base mb-2">3. Kontakt</h4>
+            <p>W przypadku pytań dotyczących prywatności, prosimy o kontakt pod adresem: {email}.</p>
           </section>
         </div>
       );
@@ -220,29 +177,16 @@ const LegalModal: React.FC<LegalModalProps> = ({ isOpen, type, onClose }) => {
       headerColorClass = "bg-accent/10 text-accent";
       content = (
         <div className="text-center py-4">
-          <p className="text-gray-500 mb-8 max-w-sm mx-auto">Masz pytania dotyczące treści, zauważyłeś błąd w kalkulatorze lub chcesz nawiązać współpracę? Napisz do nas!</p>
-
-          <div className="bg-white border border-gray-100 shadow-xl rounded-3xl p-6 mb-8 max-w-sm mx-auto relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-accent"></div>
-            <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <i className="fas fa-at text-2xl"></i>
-            </div>
-            <h4 className="font-bold text-gray-800 text-lg mb-1">Wyślij wiadomość</h4>
-            <p className="text-sm text-gray-400 mb-4">Odpowiadamy zazwyczaj w ciągu 24h</p>
-            <div className="bg-gray-50 py-3 px-4 rounded-xl border border-gray-200 text-primary font-bold select-all mb-6 break-all">
-              {email}
-            </div>
-            <a
-              href={`mailto:${email}`}
-              className="block w-full bg-primary text-white font-bold py-3 rounded-xl hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
-            >
-              Napisz teraz <i className="fas fa-paper-plane ml-2"></i>
-            </a>
+          <p className="text-gray-500 mb-8 max-w-sm mx-auto">Masz pytania? Napisz do nas!</p>
+          <div className="bg-gray-50 py-3 px-4 rounded-xl border border-gray-200 text-primary font-bold select-all mb-6 break-all max-w-sm mx-auto">
+            {email}
           </div>
-
-          <p className="text-xs text-gray-400 italic">
-            Prosimy nie przesyłać poufnych danych finansowych.
-          </p>
+          <a
+            href={`mailto:${email}`}
+            className="inline-block bg-primary text-white font-bold py-3 px-6 rounded-xl hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
+          >
+            Napisz teraz <i className="fas fa-paper-plane ml-2"></i>
+          </a>
         </div>
       );
       break;
@@ -254,15 +198,11 @@ const LegalModal: React.FC<LegalModalProps> = ({ isOpen, type, onClose }) => {
     : 'animate-slide-up md:animate-fade-in';
 
   return createPortal(
-    <div
-      className="fixed inset-0 z-[9999] flex justify-center items-end md:items-center pointer-events-none"
-      role="dialog"
-      aria-modal="true"
-    >
+    <div className="fixed inset-0 z-[9999] flex justify-center items-end md:items-center pointer-events-none" role="dialog" aria-modal="true">
       <div
         className={`fixed inset-0 bg-black/60 backdrop-blur-sm pointer-events-auto ${backdropAnimation}`}
         onClick={onClose}
-      ></div>
+      />
 
       <div
         className={`
@@ -275,7 +215,7 @@ const LegalModal: React.FC<LegalModalProps> = ({ isOpen, type, onClose }) => {
           ${modalAnimation}
         `}
       >
-        <div className={`p-6 border-b border-gray-100 flex justify-between items-center shrink-0 rounded-t-[32px] bg-white`}>
+        <div className="p-6 border-b border-gray-100 flex justify-between items-center shrink-0 rounded-t-[32px] bg-white">
           <div className="flex items-center gap-4">
             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 transition-colors ${headerColorClass}`}>
               <i className={`fas ${icon} text-xl`}></i>
@@ -287,6 +227,7 @@ const LegalModal: React.FC<LegalModalProps> = ({ isOpen, type, onClose }) => {
           <button
             onClick={onClose}
             className="w-10 h-10 rounded-full bg-white border border-gray-200 text-gray-400 hover:text-primary hover:border-primary flex items-center justify-center transition-all shrink-0"
+            aria-label="Zamknij"
           >
             <i className="fas fa-times"></i>
           </button>
