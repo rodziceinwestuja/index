@@ -21,7 +21,7 @@ const ResultFamilyBonds: React.FC = () => {
   };
 
   const openProviderModal = () => {
-      setModalType('bonds');
+      setModalType('bonds-family');
   };
 
   // UX Change: No movement, just crisp shadow transition
