@@ -222,7 +222,7 @@ const ResultMix: React.FC = () => {
         {/* Bonds Card (Safety) - RIGHT/MIDDLE */}
         <div className="flex-1 min-w-0">
             <button 
-                onClick={() => setModalType('bonds')} 
+                onClick={() => setModalType('bonds-standard')} 
                 disabled={bondPct === 0}
                 className={getCardStyle(bondPct > 0, 'blue')}
             >
