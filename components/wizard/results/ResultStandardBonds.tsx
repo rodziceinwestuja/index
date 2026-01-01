@@ -21,7 +21,7 @@ const ResultStandardBonds: React.FC = () => {
   };
 
   const openProviderModal = () => {
-      setModalType('bonds');
+      setModalType('bonds-standard');
   };
 
   // UX Change: No movement, just crisp shadow transition
