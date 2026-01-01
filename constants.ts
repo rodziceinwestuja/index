@@ -74,17 +74,33 @@ export const METAL_DEALERS: Broker[] = [
 ];
 
 /**
- * OBLIGACJE SKARBOWE - Wykorzystywane w modalu "Gdzie kupić Obligacje"
+ * OBLIGACJE RODZINNE (800+) - Tylko PKO BP
  */
-export const BOND_PLATFORMS: Broker[] = [
+export const BOND_PLATFORMS_FAMILY: Broker[] = [
   { 
-    name: "Obligacje Skarbowe w banku PKO BP", 
-    desc: "Jedyny sposób na zakup obligacji rodzinnych (800+).", 
+    name: "PKO Bank Polski", 
+    desc: "Wyłączny dystrybutor obligacji rodzinnych (ROS, ROD). Zakup przez serwis iPKO lub w oddziale.", 
     link: "https://www.obligacjeskarbowe.pl/punkty-sprzedazy/" 
   },
   {
-    name: "Obligacje Skarbowe w Biurze Maklerskim PKO BP",
-    desc: "Obligacje możesz nabyć również za pośrednictwem BM PKO BP",
+    name: "Biuro Maklerskie PKO BP",
+    desc: "Alternatywny dostęp do oferty obligacji rodzinnych.",
     link: "https://www.obligacjeskarbowe.pl/punkty-sprzedazy/"
+  }
+];
+
+/**
+ * OBLIGACJE STANDARDOWE - PKO BP + Pekao S.A.
+ */
+export const BOND_PLATFORMS_STANDARD: Broker[] = [
+  { 
+    name: "PKO Bank Polski", 
+    desc: "Dostęp przez serwis iPKO, aplikację mobilną oraz w oddziałach.", 
+    link: "https://www.obligacjeskarbowe.pl/punkty-sprzedazy/" 
+  },
+  {
+    name: "Bank Pekao S.A.",
+    desc: "Dostęp przez serwis Pekao24, aplikację PeoPay oraz w oddziałach.",
+    link: "https://www.pekao.com.pl/klient-indywidualny/oszczedzanie-i-inwestowanie/obligacje-skarbowe.html"
   }
 ];
