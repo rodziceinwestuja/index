@@ -9,4 +9,5 @@ npm-debug.log*
 .vite/
 .cache/
 .idea/
+.claude/settings.local.json
 # .vscode/ is intentionally tracked — it pins workspace lint settings.

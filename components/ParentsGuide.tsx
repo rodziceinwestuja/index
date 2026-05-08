@@ -162,8 +162,6 @@ const ParentsGuide: React.FC<ParentsGuideProps> = ({ onBack }) => {
     const ikzePercent = (currentIkzeLimit / totalLimit) * 100;
     const progressClass = PARENTS_PROGRESS_CLASS[activeStepIndex] ?? PARENTS_PROGRESS_CLASS[0];
     const strategyFillClass = `strategy-fill-${strategyLevel}` as const;
-    const ikeAllocationClass = isSelfEmployed ? 'allocation-self-employed-ike' : 'allocation-standard-ike';
-    const ikzeAllocationClass = isSelfEmployed ? 'allocation-self-employed-ikze' : 'allocation-standard-ikze';
 
     // Card Style for Step 5
     const cardStyle = "w-full bg-white p-6 md:p-8 rounded-[32px] border shadow-lg flex flex-col items-center text-center relative overflow-hidden group hover:shadow-xl cursor-pointer hover-card-crisp transition-all";
@@ -466,24 +464,24 @@ const ParentsGuide: React.FC<ParentsGuideProps> = ({ onBack }) => {
                                         <span>Alokacja kapitału (Łącznie: {formatCurrency(totalLimit)})</span>
                                     </div>
                                     
-                                    <div className="w-full h-24 md:h-28 bg-gray-50 rounded-2xl overflow-hidden flex shadow-inner border border-gray-200">
+                                    <div className="w-full bg-gray-50 rounded-2xl overflow-hidden flex flex-col shadow-inner border border-gray-200">
                                         {/* IKE SEGMENT */}
-                                        <div 
-                                            className={`h-full relative flex flex-col justify-center px-4 transition-colors duration-500 ${ikeAllocationClass} ${currentStrategy.ike.color === 'blue' ? 'bg-blue-50 text-blue-800' : 'bg-purple-50 text-purple-800'}`}
+                                        <div
+                                            className={`relative flex flex-col justify-center px-4 py-4 md:py-5 transition-colors duration-500 ${currentStrategy.ike.color === 'blue' ? 'bg-blue-50 text-blue-800' : 'bg-purple-50 text-purple-800'}`}
                                         >
-                                            <div className={`absolute left-0 top-0 bottom-0 w-1.5 md:w-2 ${currentStrategy.ike.color === 'blue' ? 'bg-blue-500' : 'bg-purple-500'}`}></div>
+                                            <div className={`absolute top-0 left-0 right-0 h-1.5 md:h-2 ${currentStrategy.ike.color === 'blue' ? 'bg-blue-500' : 'bg-purple-500'}`}></div>
                                             <span className="text-xs font-bold opacity-60 uppercase mb-0.5">IKE</span>
-                                            <span className="font-bold text-base md:text-xl leading-tight truncate">{currentStrategy.ike.type}</span>
+                                            <span className="font-bold text-base md:text-xl leading-tight">{currentStrategy.ike.type}</span>
                                             <span className="text-xs opacity-70 mt-1">{formatCurrency(LIMITS.IKE)} ({Math.round(ikePercent)}%)</span>
                                         </div>
 
                                         {/* IKZE SEGMENT */}
-                                        <div 
-                                            className={`h-full relative flex flex-col justify-center px-4 transition-colors duration-500 border-l border-white/50 ${ikzeAllocationClass} ${currentStrategy.ikze.color === 'blue' ? 'bg-blue-100/50 text-blue-800' : 'bg-purple-100/50 text-purple-800'}`}
+                                        <div
+                                            className={`relative flex flex-col justify-center px-4 py-4 md:py-5 transition-colors duration-500 border-t border-white/50 ${currentStrategy.ikze.color === 'blue' ? 'bg-blue-100/50 text-blue-800' : 'bg-purple-100/50 text-purple-800'}`}
                                         >
-                                            <div className={`absolute left-0 top-0 bottom-0 w-1.5 md:w-2 ${currentStrategy.ikze.color === 'blue' ? 'bg-blue-500' : 'bg-purple-500'}`}></div>
+                                            <div className={`absolute top-0 left-0 right-0 h-1.5 md:h-2 ${currentStrategy.ikze.color === 'blue' ? 'bg-blue-500' : 'bg-purple-500'}`}></div>
                                             <span className="text-xs font-bold opacity-60 uppercase mb-0.5">IKZE</span>
-                                            <span className="font-bold text-base md:text-xl leading-tight truncate">{currentStrategy.ikze.type}</span>
+                                            <span className="font-bold text-base md:text-xl leading-tight">{currentStrategy.ikze.type}</span>
                                             <span className="text-xs opacity-70 mt-1">{formatCurrency(currentIkzeLimit)} ({Math.round(ikzePercent)}%)</span>
                                         </div>
                                     </div>

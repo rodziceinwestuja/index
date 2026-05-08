@@ -224,18 +224,3 @@ input[type=number] {
   transform: translateX(-50%);
 }
 
-.allocation-standard-ike {
-  width: 71.4286%;
-}
-
-.allocation-standard-ikze {
-  width: 28.5714%;
-}
-
-.allocation-self-employed-ike {
-  width: 62.5%;
-}
-
-.allocation-self-employed-ikze {
-  width: 37.5%;
-}
