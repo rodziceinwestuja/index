@@ -464,25 +464,33 @@ const ParentsGuide: React.FC<ParentsGuideProps> = ({ onBack }) => {
                                         <span>Alokacja kapitału (Łącznie: {formatCurrency(totalLimit)})</span>
                                     </div>
                                     
-                                    <div className="w-full bg-gray-50 rounded-2xl overflow-hidden flex flex-col shadow-inner border border-gray-200">
+                                    <div className="w-full h-72 md:h-80 bg-gray-50 rounded-2xl overflow-hidden flex flex-col shadow-inner border border-gray-200">
                                         {/* IKE SEGMENT */}
                                         <div
-                                            className={`relative flex flex-col justify-center px-4 py-4 md:py-5 transition-colors duration-500 ${currentStrategy.ike.color === 'blue' ? 'bg-blue-50 text-blue-800' : 'bg-purple-50 text-purple-800'}`}
+                                            style={{ flexGrow: ikePercent, flexBasis: 0 }}
+                                            className={`relative flex flex-col justify-center px-4 py-3 min-h-[4.5rem] transition-all duration-500 ${currentStrategy.ike.color === 'blue' ? 'bg-blue-50 text-blue-800' : 'bg-purple-50 text-purple-800'}`}
                                         >
                                             <div className={`absolute top-0 left-0 right-0 h-1.5 md:h-2 ${currentStrategy.ike.color === 'blue' ? 'bg-blue-500' : 'bg-purple-500'}`}></div>
-                                            <span className="text-xs font-bold opacity-60 uppercase mb-0.5">IKE</span>
-                                            <span className="font-bold text-base md:text-xl leading-tight">{currentStrategy.ike.type}</span>
-                                            <span className="text-xs opacity-70 mt-1">{formatCurrency(LIMITS.IKE)} ({Math.round(ikePercent)}%)</span>
+                                            <div className="flex items-baseline justify-between gap-2">
+                                                <span className="text-xs font-bold opacity-60 uppercase tracking-wide">IKE</span>
+                                                <span className="text-xs font-bold opacity-60">{Math.round(ikePercent)}%</span>
+                                            </div>
+                                            <span className="font-bold text-base md:text-lg leading-tight mt-1">{currentStrategy.ike.type}</span>
+                                            <span className="text-xs opacity-70 mt-0.5">{formatCurrency(LIMITS.IKE)}</span>
                                         </div>
 
                                         {/* IKZE SEGMENT */}
                                         <div
-                                            className={`relative flex flex-col justify-center px-4 py-4 md:py-5 transition-colors duration-500 border-t border-white/50 ${currentStrategy.ikze.color === 'blue' ? 'bg-blue-100/50 text-blue-800' : 'bg-purple-100/50 text-purple-800'}`}
+                                            style={{ flexGrow: ikzePercent, flexBasis: 0 }}
+                                            className={`relative flex flex-col justify-center px-4 py-3 min-h-[4.5rem] transition-all duration-500 border-t border-white/50 ${currentStrategy.ikze.color === 'blue' ? 'bg-blue-100/50 text-blue-800' : 'bg-purple-100/50 text-purple-800'}`}
                                         >
                                             <div className={`absolute top-0 left-0 right-0 h-1.5 md:h-2 ${currentStrategy.ikze.color === 'blue' ? 'bg-blue-500' : 'bg-purple-500'}`}></div>
-                                            <span className="text-xs font-bold opacity-60 uppercase mb-0.5">IKZE</span>
-                                            <span className="font-bold text-base md:text-xl leading-tight">{currentStrategy.ikze.type}</span>
-                                            <span className="text-xs opacity-70 mt-1">{formatCurrency(currentIkzeLimit)} ({Math.round(ikzePercent)}%)</span>
+                                            <div className="flex items-baseline justify-between gap-2">
+                                                <span className="text-xs font-bold opacity-60 uppercase tracking-wide">IKZE</span>
+                                                <span className="text-xs font-bold opacity-60">{Math.round(ikzePercent)}%</span>
+                                            </div>
+                                            <span className="font-bold text-base md:text-lg leading-tight mt-1">{currentStrategy.ikze.type}</span>
+                                            <span className="text-xs opacity-70 mt-0.5">{formatCurrency(currentIkzeLimit)}</span>
                                         </div>
                                     </div>
                                     
