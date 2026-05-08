@@ -1,0 +1,241 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --nav-h: 72px;
+  --range-color: #33C18C;
+}
+
+body {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+input[type=range] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  background: transparent;
+}
+
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 24px;
+  width: 24px;
+  border-radius: 50%;
+  background: var(--range-color, #33C18C);
+  cursor: pointer;
+  margin-top: -10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s;
+}
+
+input[type=range]::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+}
+
+input[type=range]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 6px;
+  cursor: pointer;
+  background: #E2E8F0;
+  border-radius: 3px;
+}
+
+.hero-pattern {
+  background-color: #0F4C5C;
+  background-image: radial-gradient(#155e70 2px, transparent 2px);
+  background-size: 30px 30px;
+}
+
+.tooltip-term {
+  border-bottom: 2px dotted #33C18C;
+  cursor: help;
+  position: relative;
+  display: inline-block;
+}
+
+.tooltip-term--current {
+  border-bottom-color: currentColor;
+}
+
+.tooltip-term::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #2D3748;
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  min-width: 200px;
+  text-align: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: 0.2s;
+  z-index: 50;
+  pointer-events: none;
+}
+
+.tooltip-term:hover::after {
+  opacity: 1;
+  visibility: visible;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+
+input[type=number] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.hover-card-crisp {
+  transition: all 0.3s ease-out;
+}
+
+.hover-card-crisp:hover {
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
+
+.hover-card-crisp:active {
+  opacity: 0.95;
+}
+
+.range-purple {
+  --range-color: #9333ea;
+}
+
+.range-amber {
+  --range-color: #f59e0b;
+}
+
+.range-blue {
+  --range-color: #2563eb;
+}
+
+.range-gray {
+  --range-color: #9ca3af;
+}
+
+.pulse-delay-1500 {
+  animation-delay: 1.5s;
+}
+
+.home-progress-0 {
+  width: 0%;
+}
+
+.home-progress-1 {
+  width: 20%;
+}
+
+.home-progress-2 {
+  width: 40%;
+}
+
+.home-progress-3 {
+  width: 60%;
+}
+
+.home-progress-4 {
+  width: 80%;
+}
+
+.home-progress-5 {
+  width: 100%;
+}
+
+.wizard-progress-10 {
+  width: 10%;
+}
+
+.wizard-progress-40 {
+  width: 40%;
+}
+
+.wizard-progress-50 {
+  width: 50%;
+}
+
+.wizard-progress-60 {
+  width: 60%;
+}
+
+.wizard-progress-75 {
+  width: 75%;
+}
+
+.wizard-progress-100 {
+  width: 100%;
+}
+
+.parents-progress-0 {
+  width: 0%;
+}
+
+.parents-progress-1 {
+  width: 25%;
+}
+
+.parents-progress-2 {
+  width: 50%;
+}
+
+.parents-progress-3 {
+  width: 75%;
+}
+
+.parents-progress-4 {
+  width: 100%;
+}
+
+.parents-hero-pattern {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.1) 2px, transparent 2px);
+  background-size: 30px 30px;
+}
+
+.strategy-fill-1 {
+  width: 0%;
+}
+
+.strategy-fill-2 {
+  width: 33.333333%;
+}
+
+.strategy-fill-3 {
+  width: 66.666667%;
+}
+
+.strategy-fill-4 {
+  width: 100%;
+}
+
+.strategy-thumb-center {
+  transform: translateX(-50%);
+}
+
+.allocation-standard-ike {
+  width: 71.4286%;
+}
+
+.allocation-standard-ikze {
+  width: 28.5714%;
+}
+
+.allocation-self-employed-ike {
+  width: 62.5%;
+}
+
+.allocation-self-employed-ikze {
+  width: 37.5%;
+}

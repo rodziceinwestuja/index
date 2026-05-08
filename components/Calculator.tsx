@@ -48,13 +48,14 @@ const Calculator: React.FC = () => {
               <label htmlFor="age-slider" className="block text-sm font-bold text-gray-700 mb-2">
                 Wiek dziecka (teraz): <span className="text-primary text-xl font-display">{age} lat</span>
               </label>
-              <input 
+              <input
                 id="age-slider"
-                type="range" 
-                min="0" max="17" 
-                value={age} 
+                type="range"
+                min="0" max="17"
+                value={age}
                 onChange={(e) => setAge(parseInt(e.target.value))}
                 aria-label="Wiek dziecka"
+                title="Wiek dziecka"
               />
               <p className="text-xs text-gray-400 mt-4 font-semibold uppercase tracking-wider">Czas inwestycji: {results.yearsInvesting} lat</p>
             </div>
@@ -63,13 +64,14 @@ const Calculator: React.FC = () => {
               <label htmlFor="deposit-slider" className="block text-sm font-bold text-gray-700 mb-2">
                 Wpłata miesięczna: <span className="text-primary text-xl font-display">{deposit} zł</span>
               </label>
-              <input 
+              <input
                 id="deposit-slider"
-                type="range" 
-                min="100" max="2000" step="50" 
-                value={deposit} 
+                type="range"
+                min="100" max="2000" step="50"
+                value={deposit}
                 onChange={(e) => setDeposit(parseInt(e.target.value))}
                 aria-label="Miesięczna wpłata"
+                title="Miesięczna wpłata"
               />
             </div>
 
@@ -78,26 +80,34 @@ const Calculator: React.FC = () => {
                 Zakładany zysk roczny: <span className="text-primary text-xl font-display">{rate.toFixed(1)}%</span>
               </label>
               <div className="relative w-full pb-8">
-                <input 
+                <input
                   id="rate-slider"
-                  type="range" 
-                  min="0" max="12" step="0.5" 
-                  value={rate} 
+                  type="range"
+                  min="0" max="12" step="0.5"
+                  value={rate}
                   onChange={(e) => setRate(parseFloat(e.target.value))}
                   className="relative z-10 w-full"
                   aria-label="Stopa zwrotu"
+                  title="Stopa zwrotu"
                 />
-                <div className="absolute top-2 w-0.5 h-3 bg-gray-200" style={{ left: '0%' }}></div>
-                <div className="absolute top-8 text-[9px] uppercase tracking-widest text-gray-400 font-bold -translate-x-1/2" style={{ left: '0%' }}>skarpeta</div>
                 
-                <div className="absolute top-2 w-0.5 h-3 bg-gray-200" style={{ left: '33.3%' }}></div>
-                <div className="absolute top-8 text-[9px] uppercase tracking-widest text-gray-400 font-bold -translate-x-1/2" style={{ left: '33.3%' }}>obligacje</div>
-                
-                <div className="absolute top-2 w-0.5 h-3 bg-gray-200" style={{ left: '58.3%' }}></div>
-                <div className="absolute top-8 text-[9px] uppercase tracking-widest text-gray-400 font-bold -translate-x-1/2" style={{ left: '58.3%' }}>akcje</div>
-                
-                <div className="absolute top-2 w-0.5 h-3 bg-gray-200" style={{ left: '100%' }}></div>
-                <div className="absolute top-8 text-[9px] uppercase tracking-widest text-gray-400 font-bold -translate-x-full text-right leading-tight" style={{ left: '100%' }}>
+                {/* 
+                   POPRAWA ETYKIET SUWAKA:
+                   1. text-[10px] na mobile, text-xs na desktop
+                   2. tracking-tight na mobile, tracking-widest na desktop
+                   To zapobiega nakładaniu się tekstów przy zachowaniu czytelności.
+                */}
+                <div className="absolute top-2 left-[0%] w-0.5 h-3 bg-gray-200"></div>
+                <div className="absolute top-8 left-[0%] text-[10px] md:text-xs uppercase tracking-tight md:tracking-widest text-gray-400 font-bold">skarpeta</div>
+
+                <div className="absolute top-2 left-[33.3%] w-0.5 h-3 bg-gray-200"></div>
+                <div className="absolute top-8 left-[33.3%] text-[10px] md:text-xs uppercase tracking-tight md:tracking-widest text-gray-400 font-bold -translate-x-1/2">obligacje</div>
+
+                <div className="absolute top-2 left-[58.3%] w-0.5 h-3 bg-gray-200"></div>
+                <div className="absolute top-8 left-[58.3%] text-[10px] md:text-xs uppercase tracking-tight md:tracking-widest text-gray-400 font-bold -translate-x-1/2">akcje</div>
+
+                <div className="absolute top-2 left-[100%] w-0.5 h-3 bg-gray-200"></div>
+                <div className="absolute top-8 left-[100%] text-[10px] md:text-xs uppercase tracking-tight md:tracking-widest text-gray-400 font-bold -translate-x-full text-right leading-tight">
                   super<br className="sm:hidden" /> inwestor
                 </div>
               </div>
@@ -119,7 +129,7 @@ const Calculator: React.FC = () => {
               </div>
             </div>
             
-            <p className="text-[10px] text-gray-400 mt-4 relative z-10 leading-relaxed italic opacity-80">
+            <p className="text-xs text-gray-400 mt-4 relative z-10 leading-relaxed italic opacity-80">
               * To tylko symulacja. Oprocentowanie i inflacja zmieniają się w czasie, a historyczny wynik giełdy (~7%) nie gwarantuje zysków w przyszłości.
             </p>
           </div>

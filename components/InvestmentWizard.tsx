@@ -15,17 +15,30 @@ import ResultBrokers from './wizard/results/ResultBrokers';
 
 interface InvestmentWizardProps {
   onBack: () => void;
+  onGoToParentsGuide: () => void;
 }
 
-const InvestmentWizard: React.FC<InvestmentWizardProps> = ({ onBack }) => {
+const InvestmentWizard: React.FC<InvestmentWizardProps> = ({ onBack, onGoToParentsGuide }) => {
   const [currentStep, setCurrentStep] = useState<WizardStep>('step1');
   const [progress, setProgress] = useState(10);
+  const progressClassMap: Record<number, string> = {
+    10: 'wizard-progress-10',
+    40: 'wizard-progress-40',
+    50: 'wizard-progress-50',
+    60: 'wizard-progress-60',
+    75: 'wizard-progress-75',
+    100: 'wizard-progress-100',
+  };
 
   useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   }, [currentStep]);
 
   const navigateTo = (step: WizardStep, p: number) => {
+    if (step === 'redirect-parents') {
+      onGoToParentsGuide();
+      return;
+    }
     setCurrentStep(step);
     setProgress(p);
   };
@@ -52,21 +65,21 @@ const InvestmentWizard: React.FC<InvestmentWizardProps> = ({ onBack }) => {
       <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
         <div className="max-w-5xl mx-auto px-6 py-4 grid grid-cols-3 items-center">
           <div className="flex justify-start">
-            <button onClick={handleHeaderBack} className="text-gray-400 hover:text-primary p-2 transition-colors flex items-center gap-2 font-bold group">
-              <i className="fas fa-arrow-left text-xl group-hover:-translate-x-1 transition-transform"></i>
+            <button type="button" onClick={handleHeaderBack} aria-label="Cofnij" title="Cofnij" className="text-gray-400 hover:text-primary p-2 transition-colors flex items-center gap-2 font-bold group">
+              <i aria-hidden="true" className="fas fa-arrow-left text-xl group-hover:-translate-x-1 transition-transform"></i>
             </button>
           </div>
           <div className="text-center">
             <h1 className="font-display font-bold text-primary text-sm md:text-base">Kreator Inwestycji</h1>
           </div>
           <div className="flex justify-end">
-            <button onClick={onBack} className="text-gray-400 hover:text-primary p-2 transition-colors">
-              <i className="fas fa-times text-xl"></i>
+            <button type="button" onClick={onBack} aria-label="Zamknij kreator" title="Zamknij kreator" className="text-gray-400 hover:text-primary p-2 transition-colors">
+              <i aria-hidden="true" className="fas fa-times text-xl"></i>
             </button>
           </div>
         </div>
         <div className="w-full bg-gray-100 h-1.5 overflow-hidden">
-          <div className="bg-accent h-full transition-all duration-1000 ease-out" style={{ width: `${progress}%` }} />
+          <div className={`bg-accent h-full transition-all duration-1000 ease-out ${progressClassMap[progress]}`} />
         </div>
       </div>
 

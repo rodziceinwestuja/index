@@ -52,7 +52,7 @@ const CookieConsent: React.FC<CookieConsentProps> = ({ onOpenPrivacy }) => {
                   <p className="mb-1">
                     <strong>Szanujemy Twój wybór.</strong> Używamy plików cookies, aby zapewnić poprawne działanie strony (niezbędne) oraz – za Twoją zgodą – do analizy ruchu, co pomaga nam rozwijać treści edukacyjne.
                   </p>
-                  <button
+                  <button type="button"
                       onClick={onOpenPrivacy}
                       className="text-primary font-bold hover:text-accent transition-colors text-xs inline-flex items-center gap-1 py-1"
                     >
@@ -62,13 +62,13 @@ const CookieConsent: React.FC<CookieConsentProps> = ({ onOpenPrivacy }) => {
             </div>
             
             <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto shrink-0">
-                <button
+                <button type="button"
                   onClick={() => handleDecision('necessary')}
                   className="px-6 py-3 rounded-full font-bold text-gray-500 hover:text-primary hover:bg-gray-50 border border-transparent hover:border-gray-200 transition-all text-sm w-full sm:w-auto whitespace-nowrap"
                 >
                   Tylko niezbędne
                 </button>
-                <button
+                <button type="button"
                   onClick={() => handleDecision('all')}
                   className="bg-primary hover:bg-primary/90 text-white font-bold py-3 px-8 rounded-full shadow-lg shadow-primary/20 transition-all active:scale-95 text-sm w-full sm:w-auto whitespace-nowrap"
                 >

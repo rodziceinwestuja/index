@@ -1,3 +1,4 @@
+
 export type WizardStep = 
   | 'step1' 
   | 'step2-safe-bonds' 
@@ -9,4 +10,5 @@ export type WizardStep =
   | 'result-etf' 
   | 'result-mix' 
   | 'result-active' 
-  | 'result-metals';
+  | 'result-metals'
+  | 'redirect-parents';

@@ -6,7 +6,7 @@ interface BrokerListProps {
   title: string;
   id?: string;
   isHighlight?: boolean;
-  variant?: 'green' | 'gold' | 'blue';
+  variant?: 'green' | 'gold' | 'blue' | 'purple';
   actionLabel?: string;
 }
 
@@ -54,6 +54,18 @@ const BrokerList: React.FC<BrokerListProps> = ({
       itemShadow: 'shadow-xl shadow-blue-500/10',
       itemHoverShadow: 'hover:shadow-2xl hover:shadow-blue-500/20',
       iconClass: 'fa-university'
+    },
+    purple: { 
+      container: 'bg-purple-50/60 border-purple-100', 
+      title: 'text-purple-600', 
+      iconBox: 'bg-purple-100 text-purple-600 shadow-purple-100', 
+      actionButton: 'bg-purple-50 text-purple-700 group-hover:bg-purple-100',
+      itemBorder: 'border-purple-100',
+      itemHoverBorder: 'hover:border-purple-400',
+      itemHoverBg: 'hover:bg-purple-50/20',
+      itemShadow: 'shadow-xl shadow-purple-500/10',
+      itemHoverShadow: 'hover:shadow-2xl hover:shadow-purple-500/20',
+      iconClass: 'fa-university'
     }
   };
   const colors = colorMap[variant];
@@ -65,44 +77,70 @@ const BrokerList: React.FC<BrokerListProps> = ({
       </p>
       <div className="grid gap-6 max-w-2xl mx-auto">
         {list.map((b, idx) => {
+          const baseClasses = `
+            flex items-center justify-between p-5 md:p-6 rounded-[24px] md:rounded-[28px] group border bg-white
+            ${colors.itemBorder}
+            ${colors.itemShadow}
+          `;
+
+          const itemContent = (
+            <>
+              <div className="flex items-start gap-4 md:gap-5 flex-1 min-w-0">
+                <div className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center shrink-0 mt-1 shadow-sm transition-transform duration-300 ${colors.iconBox}`}>
+                  <i aria-hidden="true" className={`fas ${b.comingSoon ? 'fa-hourglass-half' : colors.iconClass} text-xl md:text-2xl`}></i>
+                </div>
+
+                <div className="text-left min-w-0">
+                  <span className="block font-bold text-primary text-lg md:text-xl leading-tight mb-2 break-words">{b.name}</span>
+                  <span className="block text-sm text-gray-500 leading-relaxed line-clamp-2">{b.desc}</span>
+                </div>
+              </div>
+
+              <div className={`
+                flex items-center gap-2 font-bold text-sm px-4 py-3 rounded-xl ml-2 shrink-0 self-center shadow-sm
+                transition-colors duration-300 ease-out
+                ${b.comingSoon ? 'bg-gray-100 text-gray-400' : colors.actionButton}
+              `}>
+                {b.comingSoon ? (
+                  <span className="whitespace-nowrap">Już wkrótce</span>
+                ) : (
+                  <>
+                    <span className="hidden md:inline whitespace-nowrap">{actionLabel}</span>
+                    <span className="md:hidden text-xs">Otwórz</span>
+                    <i aria-hidden="true" className="fas fa-chevron-right text-xs"></i>
+                  </>
+                )}
+              </div>
+            </>
+          );
+
+          if (b.comingSoon) {
+            return (
+              <div
+                key={idx}
+                aria-disabled="true"
+                className={`${baseClasses} opacity-70 cursor-default`}
+              >
+                {itemContent}
+              </div>
+            );
+          }
+
           return (
-            <a 
-              key={idx} 
-              href={b.link} 
-              target="_blank" 
+            <a
+              key={idx}
+              href={b.link}
+              target="_blank"
               rel="noopener noreferrer"
               className={`
-                flex items-center justify-between p-5 md:p-6 rounded-[24px] md:rounded-[28px] group border bg-white
-                ${colors.itemBorder}
-                ${colors.itemShadow}
+                ${baseClasses}
                 ${colors.itemHoverBorder}
                 ${colors.itemHoverShadow}
                 ${colors.itemHoverBg}
                 hover-card-crisp
               `}
             >
-              <div className="flex items-start gap-4 md:gap-5 flex-1 min-w-0">
-                {/* IKONA INSTYTUCJI */}
-                <div className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center shrink-0 mt-1 shadow-sm transition-transform duration-300 ${colors.iconBox}`}>
-                  <i className={`fas ${colors.iconClass} text-xl md:text-2xl`}></i>
-                </div>
-                
-                <div className="text-left min-w-0">
-                  <span className="block font-bold text-primary text-base md:text-lg leading-tight mb-2 break-words">{b.name}</span>
-                  <span className="block text-xs md:text-sm text-gray-500 leading-relaxed line-clamp-2">{b.desc}</span>
-                </div>
-              </div>
-
-              {/* PRZYCISK AKCJI - tylko zmiana koloru, bez ruchu */}
-              <div className={`
-                flex items-center gap-2 font-bold text-xs md:text-sm px-3 py-2 md:px-4 md:py-2.5 rounded-xl ml-2 shrink-0 self-center shadow-sm
-                transition-colors duration-300 ease-out
-                ${colors.actionButton}
-              `}>
-                <span className="hidden md:inline whitespace-nowrap">{actionLabel}</span>
-                <span className="md:hidden">Otwórz</span>
-                <i className="fas fa-chevron-right text-[10px] md:text-xs"></i>
-              </div>
+              {itemContent}
             </a>
           );
         })}

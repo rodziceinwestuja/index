@@ -1,10 +1,10 @@
-
-export type Page = 'home' | 'wizard';
+export type Page = 'home' | 'wizard' | 'parents-guide';
 
 export interface Broker {
   name: string;
   desc: string;
   link: string;
+  comingSoon?: boolean;
 }
 
 export interface ChartDataPoint {

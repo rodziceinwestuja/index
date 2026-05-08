@@ -20,7 +20,7 @@ interface BondSimulatorProps {
 
 const BondSimulator: React.FC<BondSimulatorProps> = ({ 
   defaultMargin = 2, 
-  defaultFirstYear = 5.85,
+  defaultFirstYear = 5.60,
   title = "Symulator Twoich obligacji", 
   onScrollToPurchase,
   variant = 'green'
@@ -62,6 +62,8 @@ const BondSimulator: React.FC<BondSimulatorProps> = ({
   // Styles based on variant
   const isBlue = variant === 'blue';
   const mainColor = isBlue ? '#2563EB' : '#33C18C'; // blue-600 : accent
+  const sliderColor = isBlue ? '#2563EB' : '#33C18C';
+
   const styles = {
     icon: isBlue ? 'text-blue-600' : 'text-accent',
     bgLight: isBlue ? 'bg-blue-50' : 'bg-accent/10',
@@ -70,54 +72,67 @@ const BondSimulator: React.FC<BondSimulatorProps> = ({
     textMain: isBlue ? 'text-blue-600' : 'text-accent',
     bgFooter: isBlue ? 'bg-blue-50/50' : 'bg-accent/5',
     borderFooter: isBlue ? 'border-blue-100' : 'border-accent/10',
-    badge: isBlue ? 'text-blue-600 bg-blue-100' : 'text-accent bg-accent/10',
   };
+  
+  const firstYearInputId = `bond-first-year-rate-${variant}`;
+  const marginInputId = `bond-margin-${variant}`;
+  const inflationInputId = `bond-inflation-${variant}`;
+  const sliderClass = isBlue ? 'range-blue' : 'range-purple';
 
   return (
     <div className="bg-white rounded-[32px] border border-gray-100 shadow-xl overflow-hidden mb-10 text-left animate-fade-in relative">
       <div className="p-6 md:p-8 border-b border-gray-50 bg-bgLight/50 relative z-10">
-        <h3 className="font-display font-bold text-xl text-primary mb-6 flex items-start gap-3">
+        <h3 className="font-display font-bold text-xl text-primary mb-8 flex items-start gap-3">
           <i className={`fas fa-calculator ${styles.icon} mt-1`}></i>
           <span>{title}</span>
         </h3>
         
-        <div className="grid grid-cols-1 gap-6 mb-8 max-w-2xl mx-auto">
+        <div className="grid grid-cols-1 gap-8 mb-8 max-w-2xl mx-auto">
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2 flex justify-between items-center">
-                <span>Oprocentowanie w pierwszym roku</span>
-                <span className={`${styles.badge} px-3 py-1 rounded-full`}>{firstYearRate.toFixed(2)}%</span>
+              <label htmlFor={firstYearInputId} className="block text-sm font-bold text-gray-700 mb-2 flex justify-between items-end">
+                <span>Oprocentowanie w pierwszym roku:</span>
+                <span className={`${styles.textMain} text-xl font-display`}>{firstYearRate.toFixed(2)}%</span>
               </label>
               <input 
+                id={firstYearInputId}
+                aria-label="Oprocentowanie w pierwszym roku"
+                title="Oprocentowanie w pierwszym roku"
                 type="range" min="0" max="10" step="0.05" 
                 value={firstYearRate} 
                 onChange={(e) => setFirstYearRate(parseFloat(e.target.value))}
-                className={`w-full ${styles.slider}`}
+                className={`w-full ${styles.slider} ${sliderClass}`}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2 flex justify-between items-center">
-                <span>Marża (kolejne lata)</span>
-                <span className={`${styles.badge} px-3 py-1 rounded-full`}>{margin.toFixed(2)}%</span>
+              <label htmlFor={marginInputId} className="block text-sm font-bold text-gray-700 mb-2 flex justify-between items-end">
+                <span>Marża (kolejne lata):</span>
+                <span className={`${styles.textMain} text-xl font-display`}>{margin.toFixed(2)}%</span>
               </label>
               <input 
+                id={marginInputId}
+                aria-label="Marża w kolejnych latach"
+                title="Marża w kolejnych latach"
                 type="range" min="0" max="5" step="0.05" 
                 value={margin} 
                 onChange={(e) => setMargin(parseFloat(e.target.value))}
-                className={`w-full ${styles.slider}`}
+                className={`w-full ${styles.slider} ${sliderClass}`}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2 flex justify-between items-center">
-                <span>Zakładana inflacja (średnia)</span>
-                <span className="text-gray-500 bg-gray-100 px-3 py-1 rounded-full">{inflation.toFixed(1)}%</span>
+              <label htmlFor={inflationInputId} className="block text-sm font-bold text-gray-700 mb-2 flex justify-between items-end">
+                <span>Zakładana inflacja (średnia):</span>
+                <span className="text-gray-500 text-xl font-display">{inflation.toFixed(1)}%</span>
               </label>
               <input 
+                id={inflationInputId}
+                aria-label="Zakładana inflacja"
+                title="Zakładana inflacja"
                 type="range" min="0" max="15" step="0.5" 
                 value={inflation} 
                 onChange={(e) => setInflation(parseFloat(e.target.value))}
-                className="w-full accent-gray-400"
+                className="w-full accent-gray-400 range-gray"
               />
             </div>
         </div>
@@ -125,23 +140,23 @@ const BondSimulator: React.FC<BondSimulatorProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-center relative overflow-hidden">
              <div className="absolute right-2 bottom-2 opacity-10"><i className="fas fa-wallet text-4xl"></i></div>
-            <span className="text-xs uppercase font-bold text-gray-400 block mb-1">Suma wpłat (Kapitał)</span>
+            <span className="text-sm uppercase font-bold text-gray-400 block mb-1">Suma wpłat (Kapitał)</span>
             <span className="text-xl font-bold text-gray-600 block">{formatPLN(totalDeposited)}</span>
           </div>
           <div className={`${styles.bgLight} p-5 rounded-2xl border ${styles.borderLight} shadow-sm flex flex-col justify-center relative overflow-hidden`}>
              <div className="absolute right-2 bottom-2 opacity-10"><i className="fas fa-coins text-4xl"></i></div>
-            <span className={`text-xs uppercase font-bold ${styles.textMain} block mb-1`}>Kapitał z odsetkami</span>
+            <span className={`text-sm uppercase font-bold ${styles.textMain} block mb-1`}>Kapitał z odsetkami</span>
             <span className={`text-xl font-bold ${styles.textMain} block`}>{formatPLN(finalNominal)}</span>
           </div>
           <div className="bg-emerald-50 p-5 rounded-2xl border border-emerald-100 shadow-sm flex flex-col justify-center relative overflow-hidden">
              <div className="absolute right-2 bottom-2 opacity-10"><i className="fas fa-chart-line text-4xl text-emerald-600"></i></div>
-            <span className="text-xs uppercase font-bold text-emerald-600 block mb-1">Zysk po 18l (przed podatkiem)</span>
+            <span className="text-sm uppercase font-bold text-emerald-600 block mb-1">Zysk po 18l (brutto)</span>
             <span className="text-xl font-bold text-emerald-600 block">{formatPLN(profit)}</span>
           </div>
         </div>
       </div>
 
-      <div className="p-4 md:p-8 h-[300px] w-full bg-white">
+      <div className="p-4 md:p-8 h-[300px] w-full bg-white min-w-0">
         <ResponsiveContainer width="100%" height="100%" minWidth={0}>
           <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
             <defs>
@@ -151,8 +166,8 @@ const BondSimulator: React.FC<BondSimulatorProps> = ({
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-            <XAxis dataKey="year" fontSize={11} tick={{ fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
-            <YAxis fontSize={11} tick={{ fill: '#9CA3AF' }} axisLine={false} tickLine={false} tickFormatter={(val) => `${val/1000}k`} />
+            <XAxis dataKey="year" fontSize={12} tick={{ fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
+            <YAxis fontSize={12} tick={{ fill: '#9CA3AF' }} axisLine={false} tickLine={false} tickFormatter={(val) => `${val/1000}k`} />
             <Tooltip 
               formatter={(value: number, name: string) => [formatPLN(value), name === 'nominal' ? 'Wartość razem' : 'Wpłacony kapitał']}
               contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}
@@ -180,12 +195,12 @@ const BondSimulator: React.FC<BondSimulatorProps> = ({
       </div>
 
       <div className={`p-6 ${styles.bgFooter} border-t ${styles.borderFooter} flex flex-col md:flex-row justify-between items-center gap-4`}>
-        <p className="text-xs text-gray-500 leading-relaxed font-medium text-center md:text-left max-w-lg">
+        <p className="text-sm text-gray-500 leading-relaxed font-medium text-center md:text-left max-w-lg">
           <i className={`fas fa-info-circle ${styles.icon} mr-2`}></i>
           Mechanizm: W pierwszym roku zysk jest stały. W kolejnych latach zysk to: <span className="font-bold text-gray-700">inflacja + marża</span>.
         </p>
         {onScrollToPurchase && (
-          <button 
+          <button type="button" 
             onClick={onScrollToPurchase}
             className="bg-primary text-white font-bold text-sm flex items-center gap-2 hover:bg-primary/90 transition-all px-6 py-3 rounded-full shadow-lg whitespace-nowrap"
           >

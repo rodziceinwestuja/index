@@ -1,7 +1,16 @@
-import React, { useLayoutEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import BrokerList from './wizard/BrokerList';
-import { BROKERS, METAL_DEALERS, BOND_PLATFORMS_FAMILY, BOND_PLATFORMS_STANDARD } from '../constants';
+import {
+  BROKERS,
+  METAL_DEALERS,
+  BOND_PLATFORMS_FAMILY,
+  BOND_PLATFORMS_STANDARD,
+  IKE_BONDS_BROKERS,
+  IKE_STOCKS_BROKERS,
+} from '../constants';
+import { lockBodyScroll, unlockBodyScroll } from '../lib/bodyScrollLock';
+import { useFocusRestore } from '../lib/useFocusRestore';
 
 export type ProviderType =
   | 'bonds-family'
@@ -9,6 +18,8 @@ export type ProviderType =
   | 'etf'
   | 'metals'
   | 'metals-physical'
+  | 'ike-bonds'
+  | 'ike-stocks'
   | null;
 
 interface ProvidersModalProps {
@@ -22,115 +33,93 @@ const ProvidersModal: React.FC<ProvidersModalProps> = ({ isOpen, type, onClose }
   const [isClosing, setIsClosing] = useState(false);
   const [activeType, setActiveType] = useState<ProviderType>(type);
 
-  // Czy TEN modal faktycznie zablokował scroll (żeby nie odblokować czegoś, czego nie blokował)
-  const hasLockedRef = useRef(false);
+  useFocusRestore(isOpen && !!type);
 
-  // Zapamiętanie poprzednich inline styli (żeby przywrócić dokładnie jak było)
-  const prevStylesRef = useRef<{ overflow: string; paddingRight: string } | null>(null);
-
-  const lockScroll = () => {
-    if (hasLockedRef.current) return;
-
-    const body = document.body;
-    const html = document.documentElement;
-
-    prevStylesRef.current = {
-      overflow: body.style.overflow,
-      paddingRight: body.style.paddingRight,
-    };
-
-    const scrollbarWidth = window.innerWidth - html.clientWidth;
-
-    body.style.overflow = 'hidden';
-
-    // ważne: dodaj do aktualnego paddingu (computed), nie ustawiaj "na sztywno"
-    if (scrollbarWidth > 0) {
-      const currentPaddingRight = parseFloat(getComputedStyle(body).paddingRight || '0') || 0;
-      body.style.paddingRight = `${currentPaddingRight + scrollbarWidth}px`;
-    }
-
-    hasLockedRef.current = true;
-  };
-
-  const unlockScroll = () => {
-    if (!hasLockedRef.current) return;
-
-    const body = document.body;
-    const prev = prevStylesRef.current;
-
-    body.style.overflow = prev?.overflow ?? '';
-    body.style.paddingRight = prev?.paddingRight ?? '';
-
-    prevStylesRef.current = null;
-    hasLockedRef.current = false;
-  };
-
-  useLayoutEffect(() => {
-    // OPEN
+  useEffect(() => {
     if (isOpen && type) {
       setActiveType(type);
       setIsRendered(true);
       setIsClosing(false);
-      lockScroll();
+      lockBodyScroll();
       return;
     }
-
-    // CLOSE (z animacją)
     if (!isOpen && isRendered) {
       setIsClosing(true);
       const timer = window.setTimeout(() => {
         setIsRendered(false);
         setIsClosing(false);
-        unlockScroll();
+        unlockBodyScroll();
       }, 350);
-
       return () => window.clearTimeout(timer);
     }
   }, [isOpen, type, isRendered]);
 
-  // awaryjny cleanup (np. hot reload / unmount w trakcie)
-  useLayoutEffect(() => {
-    return () => unlockScroll();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  useEffect(() => {
+    return () => {
+      if (isRendered) unlockBodyScroll();
+    };
+  }, [isRendered]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [isOpen, onClose]);
 
   if (!isRendered || !activeType) return null;
 
-  let title = "";
-  let description = "";
+  let title = '';
+  let description = '';
   let list: typeof BROKERS = [];
-  let variant: 'green' | 'blue' | 'gold' = 'green';
-  let icon = "";
+  let variant: 'green' | 'blue' | 'gold' | 'purple' = 'green';
+  let icon = '';
 
   switch (activeType) {
     case 'bonds-family':
-      title = "Gdzie kupić Obligacje Rodzinne?";
-      description = "Obligacje rodzinne (ROS, ROD) przeznaczone dla beneficjentów 800+ są dostępne wyłącznie w Grupie PKO Banku Polskiego.";
+      title = 'Jak porównać dostęp do Obligacji Rodzinnych?';
+      description = 'Obligacje rodzinne (ROS, ROD) przeznaczone dla beneficjentów 800+ są dostępne wyłącznie w Grupie PKO Banku Polskiego.';
       list = BOND_PLATFORMS_FAMILY;
       variant = 'blue';
-      icon = "fa-baby-carriage";
+      icon = 'fa-baby-carriage';
       break;
     case 'bonds-standard':
-      title = "Gdzie kupić Obligacje Skarbowe?";
-      description = "Standardowe obligacje oszczędnościowe (m.in. COI, EDO) możesz kupić bezpiecznie w dwóch państwowych bankach.";
+      title = 'Jak porównać dostęp do Obligacji Skarbowych?';
+      description = 'Standardowe obligacje oszczędnościowe (m.in. COI, EDO) możesz kupić bezpiecznie w dwóch państwowych bankach.';
       list = BOND_PLATFORMS_STANDARD;
       variant = 'blue';
-      icon = "fa-shield-alt";
+      icon = 'fa-shield-alt';
       break;
     case 'etf':
-      title = "Konta Maklerskie i Fundusze indeksowe";
-      description = "Aby kupić akcje czy ETFy potrzebujesz konta maklerskiego. Alternatywnym rozwiązaniem są fundusze indeksowe. Oto sprawdzone instytucje z niskimi opłatami.";
+      title = 'Konta Maklerskie i Fundusze indeksowe';
+      description = 'Aby kupić akcje czy ETFy potrzebujesz konta maklerskiego. Alternatywnym rozwiązaniem są fundusze indeksowe. Oto sprawdzone instytucje z niskimi opłatami.';
       list = BROKERS;
       variant = 'green';
-      icon = "fa-chart-line";
+      icon = 'fa-chart-line';
       break;
     case 'metals':
     case 'metals-physical':
-      title = "Dealerzy Metali Szlachetnych";
-      description = "Rekomendowani dealerzy, u których bezpiecznie kupisz fizyczne złoto i srebro z dostawą lub odbiorem osobistym.";
+      title = 'Dealerzy Metali Szlachetnych';
+      description = 'Przy wyborze dealera metali porównaj koszty, spready, dostępność odbioru osobistego, dostawę i poziom obsługi.';
       list = METAL_DEALERS;
       variant = 'gold';
-      icon = "fa-coins";
+      icon = 'fa-coins';
+      break;
+    case 'ike-bonds':
+      title = 'IKE / IKZE Obligacje';
+      description = 'Bezpieczne konta emerytalne oparte o Obligacje Skarbowe. Gwarantowany zysk ponad inflację i bezpieczeństwo państwowe.';
+      list = IKE_BONDS_BROKERS;
+      variant = 'blue';
+      icon = 'fa-shield-alt';
+      break;
+    case 'ike-stocks':
+      title = 'IKE / IKZE Maklerskie';
+      description = 'Konta maklerskie w formie IKE/IKZE pozwalają inwestować w akcje i ETFy z całego świata bez podatku Belki.';
+      list = IKE_STOCKS_BROKERS;
+      variant = 'purple';
+      icon = 'fa-university';
       break;
   }
 
@@ -144,7 +133,7 @@ const ProvidersModal: React.FC<ProvidersModalProps> = ({ isOpen, type, onClose }
       className="fixed inset-0 z-[9999] flex justify-center items-end md:items-center pointer-events-none"
       role="dialog"
       aria-modal="true"
-      aria-labelledby="modal-title"
+      aria-labelledby="providers-modal-title"
     >
       <div
         className={`fixed inset-0 bg-black/60 backdrop-blur-sm pointer-events-auto ${backdropAnimation}`}
@@ -165,24 +154,25 @@ const ProvidersModal: React.FC<ProvidersModalProps> = ({ isOpen, type, onClose }
         <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50 shrink-0 rounded-t-[32px]">
           <div className="flex items-center gap-4">
             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${
-              variant === 'blue' ? 'bg-blue-100 text-blue-600' :
-              variant === 'gold' ? 'bg-amber-100 text-amber-600' :
-              'bg-emerald-100 text-emerald-600'
+              variant === 'blue' ? 'bg-blue-100 text-blue-600'
+                : variant === 'gold' ? 'bg-amber-100 text-amber-600'
+                  : variant === 'purple' ? 'bg-purple-100 text-purple-600'
+                    : 'bg-emerald-100 text-emerald-600'
             }`}>
-              <i className={`fas ${icon} text-xl`}></i>
+              <i aria-hidden="true" className={`fas ${icon} text-xl`}></i>
             </div>
             <div>
-              <h3 id="modal-title" className="text-xl font-bold text-primary leading-tight">{title}</h3>
+              <h3 id="providers-modal-title" className="text-xl font-bold text-primary leading-tight">{title}</h3>
               <p className="text-xs text-gray-500 mt-1">Sprawdzeni dostawcy</p>
             </div>
           </div>
 
-          <button
+          <button type="button"
             onClick={onClose}
-            aria-label="Zamknij"
+            aria-label="Zamknij listę dostawców"
             className="w-10 h-10 rounded-full bg-white border border-gray-200 text-gray-400 hover:text-primary hover:border-primary flex items-center justify-center transition-all shrink-0"
           >
-            <i className="fas fa-times"></i>
+            <i aria-hidden="true" className="fas fa-times"></i>
           </button>
         </div>
 
@@ -202,13 +192,13 @@ const ProvidersModal: React.FC<ProvidersModalProps> = ({ isOpen, type, onClose }
         </div>
 
         <div className="p-4 border-t border-gray-100 bg-gray-50 text-center shrink-0 md:rounded-b-[32px]">
-          <button onClick={onClose} className="text-gray-500 hover:text-primary text-sm font-semibold transition py-2 px-4">
+          <button type="button" onClick={onClose} className="text-gray-500 hover:text-primary text-sm font-semibold transition py-2 px-4">
             Zamknij listę
           </button>
         </div>
       </div>
     </div>,
-    document.body
+    document.body,
   );
 };
 

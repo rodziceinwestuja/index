@@ -1,0 +1,8 @@
+{
+  "webhint.enableTelemetry": false,
+  "webhint.enable": false,
+  "html-css-class-completion.enableEmmetSupport": false,
+  "css.lint.unknownAtRules": "ignore",
+  "css.lint.validProperties": [],
+  "html.format.wrapAttributes": "auto"
+}
