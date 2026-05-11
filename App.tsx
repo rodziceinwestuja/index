@@ -33,8 +33,7 @@ const App: React.FC = () => {
   const pendingScrollTimer = useRef<number | null>(null);
 
   const BLOG_URL = 'https://rodziceinwestuja.substack.com/';
-  const FACEBOOK_URL = 'https://www.facebook.com/';
-  const INSTAGRAM_URL = 'https://www.instagram.com/';
+  const X_URL = 'https://x.com/RodziceInwest';
   const homeProgressClass = `home-progress-${activeStepIndex}` as const;
 
   const homeSteps = [
@@ -529,8 +528,7 @@ const App: React.FC = () => {
               <button type="button" onClick={() => setIsContactOpen(true)} className="hover:text-white transition">Kontakt</button>
             </div>
             <div className="flex gap-4">
-              <a href={FACEBOOK_URL} target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-facebook hover:text-white transition" aria-label="Facebook"><i aria-hidden="true" className="fab fa-facebook-f"></i></a>
-              <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-gray-700 hover:text-white transition" aria-label="Instagram"><i aria-hidden="true" className="fab fa-instagram"></i></a>
+              <a href={X_URL} target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-gray-700 hover:text-white transition" aria-label="X (Twitter)"><i aria-hidden="true" className="fab fa-x-twitter"></i></a>
             </div>
           </div>
           <div className="text-center text-xs text-gray-600 max-w-2xl mx-auto border-t border-gray-800 pt-8 leading-relaxed">
