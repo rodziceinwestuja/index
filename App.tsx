@@ -327,7 +327,7 @@ const App: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => scrollToId('problem')}
-                    className="cursor-pointer whitespace-nowrap text-transparent bg-clip-text bg-gradient-to-r from-accent to-emerald-300 hover:text-emerald-200 transition-colors underline decoration-1 decoration-accent/30 hover:decoration-accent underline-offset-4 decoration-skip-ink"
+                    className="inline-block pb-[0.3em] -mb-[0.3em] cursor-pointer whitespace-nowrap text-transparent bg-clip-text bg-gradient-to-r from-accent to-emerald-300 hover:text-emerald-200 transition-colors underline decoration-1 decoration-accent/30 hover:decoration-accent underline-offset-4 decoration-skip-ink"
                   >
                     łatwiejszy start
                   </button>{' '}
@@ -336,7 +336,7 @@ const App: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => navigateTo('parents-guide')}
-                    className="cursor-pointer whitespace-nowrap text-transparent bg-clip-text bg-gradient-to-r from-violet-300 via-fuchsia-300 to-purple-300 hover:text-purple-200 transition-all underline decoration-1 decoration-purple-400/30 hover:decoration-purple-300 underline-offset-4 decoration-skip-ink"
+                    className="inline-block pb-[0.3em] -mb-[0.3em] cursor-pointer whitespace-nowrap text-transparent bg-clip-text bg-gradient-to-r from-violet-300 via-fuchsia-300 to-purple-300 hover:text-purple-200 transition-all underline decoration-1 decoration-purple-400/30 hover:decoration-purple-300 underline-offset-4 decoration-skip-ink"
                   >
                     spokojną emeryturę
                   </button>
